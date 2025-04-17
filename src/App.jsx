@@ -1,18 +1,17 @@
-import { useState } from 'react'
-// import './App.css'
-import Register from './components/Register'
-import { FiUser, FiMail, FiLock, FiCheck } from "react-icons/fi";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
 
-function App() {
-  const [count, setCount] = useState(0)
+
+const App = () => {
 
   return (
-    
-    <div>
-      <Register/>
-    </div>
-  
-  )
-}
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </Router>
+  );
+};
 
 export default App;
