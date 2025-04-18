@@ -6,16 +6,20 @@ const AuthForm = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const navigate = useNavigate();
 
-  const toggleForm = () => setIsLogin(!isLogin);
+  const toggleForm = () => {
+    if (isLogin) {
+      navigate('/register');
+    } else {
+      navigate('/login');
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isLogin) {
-      // Simulate login success
       localStorage.setItem("user", JSON.stringify(form));
       navigate("/");
     } else {
-      // Simulate registration success
       navigate("/login");
     }
   };
