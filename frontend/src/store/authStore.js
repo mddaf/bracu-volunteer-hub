@@ -27,6 +27,13 @@ export const useAuthStore = create((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			const response = await axios.post(`${API_URL}/login`, { email, password });
+
+			// Check if the account is banned
+			if (response.data.user.bannedAccount) {
+				set({ isLoading: false, error: "Your account has been banned. Please contact support." });
+				return;
+			}
+
 			set({
 				isAuthenticated: true,
 				user: response.data.user,
@@ -61,4 +68,8 @@ export const useAuthStore = create((set) => ({
 	},
 	// forgotPassword: async (email) => {},
 	// resetPassword: async (token, password) => {},
+
+
+	
+
 }));
