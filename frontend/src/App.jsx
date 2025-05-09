@@ -3,48 +3,49 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
-import ProfilePage from "./pages/ProfilePage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 import NotificationPage from "./pages/NotificationPage";
-
+import ManageRoles from "./pages/admin/ManageRoles"; // Import ManageRoles
+// import ViewJoinedEvents from "./pages/admin/ViewJoinedEvents"; // Import ViewJoinedEvents
 
 import AdminDashboard from "./pages/admin/AdminDashborad"; // Import AdminDashboard
 import ClubDashboard from "./pages/club/ClubAdminDashboard"; // Import ClubDashboard
-
-
+import UserDashboard from "./pages/user/UserDashboard"; // Import UserDashboard
+import JoinClubPage from "./pages/user/JoinClubPage"; // Import JoinClubPage
 
 import LoadingSpinner from "./components/LoadingSpinner";
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
-// import Navbar from "./components/Navbar";
 
 const ProtectedRoute = ({ children }) => {
-	const { isAuthenticated} = useAuthStore();
+    const { isAuthenticated } = useAuthStore();
 
-	if (!isAuthenticated) {
-		return <Navigate to='/login' replace />;
-	}
+    if (!isAuthenticated) {
+        return <Navigate to='/login' replace />;
+    }
 
-	return children;
+    return children;
 };
 
-// redirect authenticated users to the home page
+// Redirect authenticated users to the home page
 const RedirectAuthenticatedUser = ({ children }) => {
-	const { isAuthenticated, user } = useAuthStore();
+    const { isAuthenticated, user } = useAuthStore();
 
-	if (isAuthenticated && user.isVerified) {
-		return <Navigate to='/' replace />;
-	}
+    if (isAuthenticated && user.isVerified) {
+        return <Navigate to='/' replace />;
+    }
 
-	return children;
+    return children;
 };
-
 
 const RoleBasedRoute = ({ children, allowedRoles }) => {
     const { user } = useAuthStore();
 
-    if (!allowedRoles.includes(user?.role)) {
+    // Check if user's role is in allowedRoles
+    if (!allowedRoles.includes(user?.role) && 
+        !user?.clubs.some(club => ["clubadmin", "moderator"].includes(club.clubRole))) {
         return <Navigate to='/' replace />;
     }
 
@@ -135,6 +136,57 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                {/* User Dashboard Route */}
+                <Route
+                    path='/user/dashboard'
+                    element={
+                        <ProtectedRoute>
+                            <RoleBasedRoute allowedRoles={["user"]}>
+                                <UserDashboard />
+                            </RoleBasedRoute>
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                    <Route
+                        path='/join-club'
+                        element={
+                            <ProtectedRoute>
+                                <RoleBasedRoute allowedRoles={["user"]}>
+                                    <JoinClubPage />
+                                </RoleBasedRoute>
+                            </ProtectedRoute>
+                        }
+                    />
+
+                {/* Manage Roles Route */}
+                <Route
+                    path='/admin/manage-roles'
+                    element={
+                        <ProtectedRoute>
+                            <RoleBasedRoute allowedRoles={["admin"]}>
+                                <ManageRoles />
+                            </RoleBasedRoute>
+                        </ProtectedRoute>
+                    }
+                /> 
+
+                {/* View Joined Events Route */}
+                 {/* <Route
+                    path='/admin/joined-events/:userId'
+                    element={
+                        <ProtectedRoute>
+                            <RoleBasedRoute allowedRoles={["admin"]}>
+                                <ViewJoinedEvents />
+                            </RoleBasedRoute>
+                        </ProtectedRoute>
+                    }
+                /> */}
+
+
+
 
                 {/* Catch All Routes */}
                 <Route path='*' element={<Navigate to='/' replace />} />
