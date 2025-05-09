@@ -52,34 +52,42 @@ export const signup = async (req, res) => {
 
 
 export const login = async (req, res) => {
-	const { email, password } = req.body;
-	try {
-		const user = await User.findOne({ email });
-		if (!user) {
-			return res.status(400).json({ success: false, message: "Invalid credentials" });
-		}
-		const isPasswordValid = await bcryptjs.compare(password, user.password);
-		if (!isPasswordValid) {
-			return res.status(400).json({ success: false, message: "Invalid credentials" });
-		}
+    const { email, password } = req.body;
 
-		generateTokenAndSetCookie(res, user._id);
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
-		user.lastLogin = new Date();
-		await user.save();
+        // Check if the account is banned
+        if (user.bannedAccount) {
+            return res.status(403).json({ success: false, message: "Your account has been banned. Please contact support." });
+        }
 
-		res.status(200).json({
-			success: true,
-			message: "Logged in successfully",
-			user: {
-				...user._doc,
-				password: undefined,
-			},
-		});
-	} catch (error) {
-		console.log("Error in login ", error);
-		res.status(400).json({ success: false, message: error.message });
-	}
+        const isPasswordValid = await bcryptjs.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
+        }
+
+        // Generate token and set cookie
+        generateTokenAndSetCookie(res, user._id);
+
+        user.lastLogin = new Date();
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Logged in successfully",
+            user: {
+                ...user._doc,
+                password: undefined,
+            },
+        });
+    } catch (error) {
+        console.error("Error in login:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
 };
 
 export const logout = async (req, res) => {
@@ -102,3 +110,32 @@ export const checkAuth = async (req, res) => {
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
+
+export const changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.userId; // Extracted from token middleware
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcryptjs.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect." });
+    }
+
+    user.password = await bcryptjs.hash(newPassword, 10);
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ message: "Failed to change password." });
+  }
+};
+
+
+
+
